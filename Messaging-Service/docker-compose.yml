@@ -1,0 +1,19 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+  messaging-service:
+    build: ./Messaging-Service
+    container_name: messaging-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EMAIL_PASSWORD: abcd efgh ijkl mnop
+    depends_on:
+      - rabbitmq
+

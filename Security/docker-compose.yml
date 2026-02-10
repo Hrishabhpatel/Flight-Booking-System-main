@@ -1,0 +1,8 @@
+services:
+  security-service:
+    build: .
+    container_name: security-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker

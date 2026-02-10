@@ -1,0 +1,163 @@
+services:
+
+  # ===============================
+  # MySQL Database
+  # ===============================
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: FlightBookingSystem
+    ports:
+      - "3306:3306"   # keep for local debugging
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===============================
+  # Booking Service
+  # ===============================
+  booking-service:
+    build:
+      context: ./Booking
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FlightBookingSystem
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  # ===============================
+  # Flight Service
+  # ===============================
+  flight-service:
+    build:
+      context: ./Flights
+      dockerfile: Dockerfile
+    container_name: flight-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FlightBookingSystem
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  # ===============================
+  # Search Service
+  # ===============================
+  search-service:
+    build:
+      context: ./Search
+      dockerfile: Dockerfile
+    container_name: search-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FlightBookingSystem
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  # ===============================
+  # Payment Service
+  # ===============================
+  payment-service:
+    build:
+      context: ./Payment-Gateway
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FlightBookingSystem
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  # ===============================
+  # Messaging Service (RabbitMQ client)
+  # ===============================
+  messaging-service:
+    build:
+      context: ./Messaging-Service
+      dockerfile: Dockerfile
+    container_name: messaging-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    restart: always
+
+  # ===============================
+  # Security Service
+  # ===============================
+  security-service:
+    build:
+      context: ./Security
+      dockerfile: Dockerfile
+    container_name: security-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FlightBookingSystem
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  # ===============================
+  # API Gateway
+  # ===============================
+  api-gateway:
+    build:
+      context: ./API-Gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8091:8091"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: bXlTdXBlclNlY3JldEtleTEyMzQ1Njc4OTAxMjM0NTY3ODkw
+    depends_on:
+      - booking-service
+      - flight-service
+      - search-service
+      - payment-service
+      - messaging-service
+      - security-service
+    restart: always
+
+# ===============================
+# Volumes
+# ===============================
+volumes:
+  mysql_data:
