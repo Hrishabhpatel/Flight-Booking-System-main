@@ -9,6 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableFeignClients
 @Slf4j
+@EnableDiscoveryClient
 public class SearchApplication {
 
 	public static void main(String[] args) {

@@ -3,3 +3,4 @@
 *.gz
 *application-local.properties
 *.env
+target/
